@@ -1,21 +1,17 @@
 ﻿using FastEndpoints;
 using StudentManagementAPI.Services;
-using StudentManagmentAPI.Models;
+using StudentManagementAPI.Services.Interfaces;
+using StudentManagmentAPI.Models.DTOs;
 
-public class CreateClassRequest
+public class CreateClassEndpoint : Endpoint<CreateClassRequest, ApiResponse<ClassResponse>>
 {
-    public string Name { get; set; } = string.Empty;
-    public string Teacher { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-}
+    private readonly IClassService _classService;
+    private readonly EnrollmentService _enrollmentService; // optional for counts
 
-public class CreateClassEndpoint : Endpoint<CreateClassRequest, object> 
-{
-    private readonly ClassService _classService;
-
-    public CreateClassEndpoint(ClassService classService)
+    public CreateClassEndpoint(IClassService classService, EnrollmentService enrollmentService)
     {
         _classService = classService;
+        _enrollmentService = enrollmentService;
     }
 
     public override void Configure()
@@ -27,27 +23,25 @@ public class CreateClassEndpoint : Endpoint<CreateClassRequest, object>
 
     public override async Task HandleAsync(CreateClassRequest req, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(req.Name))
+        var newClass = req.ToModel();
+
+        var result = _classService.Create(newClass);
+
+        if (!result.Success)
         {
-            await SendAsync(new { success = false, message = "Class name is required." }, 400, ct);
+            await SendAsync(new ApiResponse<ClassResponse>
+            {
+                Success = false,
+                Message = result.Error ?? "Failed to create class."
+            }, 500, ct);
             return;
         }
 
-        var newClass = new Class
+        await SendAsync(new ApiResponse<ClassResponse>
         {
-            Name = req.Name.Trim(),
-            Teacher = req.Teacher?.Trim() ?? string.Empty,
-            Description = req.Description?.Trim() ?? string.Empty
-        };
-
-        var added = _classService.Add(newClass);
-
-        if (!added)
-        {
-            await SendAsync(new { success = false, message = "Failed to create class." }, 500, ct);
-            return;
-        }
-
-        await SendAsync(new { success = true, message = "Class created successfully.", data = newClass }, 201, ct);
+            Success = true,
+            Message = "Class created successfully.",
+            Data = result.Created?.ToResponse()
+        }, 201, ct);
     }
 }

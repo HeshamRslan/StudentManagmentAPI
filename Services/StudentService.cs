@@ -1,34 +1,26 @@
-﻿using StudentManagmentAPI.Models;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using StudentManagmentAPI.Models;
+using StudentManagementAPI.Services.Repositories;
 
 namespace StudentManagementAPI.Services
 {
     public class StudentService
     {
-        private readonly ConcurrentDictionary<int, Student> _students = new();
-        private int _idCounter = 1;
+        private readonly IStudentRepository _repo;
 
-        public IEnumerable<Student> GetAll() => _students.Values;
-
-        public Student? GetById(int id)
-            => _students.TryGetValue(id, out var s) ? s : null;
-
-        public bool Add(Student student)
+        public StudentService(IStudentRepository repo)
         {
-            student.Id = _idCounter++;
-            return _students.TryAdd(student.Id, student);
+            _repo = repo;
         }
 
-        public bool Update(Student updatedStudent)
-        {
-            if (!_students.ContainsKey(updatedStudent.Id))
-                return false; 
+        public IEnumerable<Student> GetAll() => _repo.GetAll();
 
-            _students[updatedStudent.Id] = updatedStudent;
-            return true;
-        }
+        public Student? GetById(int id) => _repo.GetById(id);
 
-        public bool Remove(int id)
-            => _students.TryRemove(id, out _);
+        public bool Add(Student s) => _repo.Add(s);
+
+        public bool Update(Student s) => _repo.Update(s);
+
+        public bool Remove(int id) => _repo.Remove(id);
     }
 }

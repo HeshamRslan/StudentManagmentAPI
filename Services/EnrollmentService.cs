@@ -1,117 +1,66 @@
-﻿using StudentManagmentAPI.Models;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using StudentManagmentAPI.Models;
+using StudentManagementAPI.Services.Repositories;
 
 namespace StudentManagementAPI.Services
 {
     public class EnrollmentService
     {
-        // key = enrollmentId -> Enrollment (for listing)
-        private readonly ConcurrentDictionary<int, Enrollment> _enrollments = new();
-        private int _idCounter = 1;
+        private readonly IEnrollmentRepository _repo;
+        // simple locks per pair to prevent race conditions
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
-        // key pair for uniqueness check: "studentId-classId"
-        private readonly ConcurrentDictionary<string, Enrollment> _byPair = new();
-
-        // Locks per entity to coordinate counts and additions
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _studentLocks = new();
-        private readonly ConcurrentDictionary<int, SemaphoreSlim> _classLocks = new();
-
-        private SemaphoreSlim GetStudentLock(int studentId) =>
-            _studentLocks.GetOrAdd(studentId, _ => new SemaphoreSlim(1, 1));
-        private SemaphoreSlim GetClassLock(int classId) =>
-            _classLocks.GetOrAdd(classId, _ => new SemaphoreSlim(1, 1));
-
-        public IEnumerable<Enrollment> GetAll() => _enrollments.Values;
-
-        public IEnumerable<Enrollment> GetByStudentId(int studentId) =>
-            _enrollments.Values.Where(e => e.StudentId == studentId);
-
-        public IEnumerable<Enrollment> GetByClassId(int classId) =>
-            _enrollments.Values.Where(e => e.ClassId == classId);
-
-        // TryEnrollAsync: atomic, thread-safe, enforces rules (limits) and prevents duplicates
-        public async Task<(bool Success, string? Error, Enrollment? Enrollment)> TryEnrollAsync(
-            int studentId,
-            int classId,
-            Func<int, int> getStudentEnrollmentCount,  // callback to get count
-            Func<int, int> getClassEnrollmentCount,    // callback to get count
-            int maxClassesPerStudent = 5,
-            int maxStudentsPerClass = 30)
+        public EnrollmentService(IEnrollmentRepository repo)
         {
-            // Compose key to check duplicates
+            _repo = repo;
+        }
+
+        private SemaphoreSlim GetLock(int studentId, int classId) =>
+            _locks.GetOrAdd($"{studentId}-{classId}", _ => new SemaphoreSlim(1,1));
+
+        public IEnumerable<Enrollment> GetAll() => _repo.GetAll();
+        public IEnumerable<Enrollment> GetByStudentId(int studentId) => _repo.GetAll().Where(e => e.StudentId == studentId);
+        public IEnumerable<Enrollment> GetByClassId(int classId) => _repo.GetAll().Where(e => e.ClassId == classId);
+
+        public async Task<(bool Success, string? Error, Enrollment? Created)> TryEnrollAsync(int studentId, int classId, Func<int,int> getStudentCount, Func<int,int> getClassCount, int maxPerStudent = 5, int maxPerClass = 30)
+        {
             var key = $"{studentId}-{classId}";
-
-            // quick check using _byPair
-            if (_byPair.ContainsKey(key))
-                return (false, "Student is already enrolled in this class.", null);
-
-            // Acquire locks in consistent order to avoid deadlocks (lower id first)
-            var firstLock = studentId <= classId ? (GetStudentLock(studentId), GetClassLock(classId)) : (GetClassLock(classId), GetStudentLock(studentId));
-            await firstLock.Item1.WaitAsync();
-            await firstLock.Item2.WaitAsync();
-
+            var sem = GetLock(studentId, classId);
+            await sem.WaitAsync();
             try
             {
-                // re-check duplicate after acquiring locks
-                if (_byPair.ContainsKey(key))
+                // duplicate check
+                if (_repo.FindByPair(studentId, classId) != null)
                     return (false, "Student is already enrolled in this class.", null);
 
-                // check student limit
-                var studentCount = getStudentEnrollmentCount(studentId);
-                if (studentCount >= maxClassesPerStudent)
-                    return (false, $"Student cannot enroll in more than {maxClassesPerStudent} classes.", null);
+                // checks
+                if (getStudentCount(studentId) >= maxPerStudent)
+                    return (false, $"Student cannot enroll in more than {maxPerStudent} classes.", null);
 
-                // check class capacity
-                var classCount = getClassEnrollmentCount(classId);
-                if (classCount >= maxStudentsPerClass)
-                    return (false, $"Class is full (max {maxStudentsPerClass} students).", null);
+                if (getClassCount(classId) >= maxPerClass)
+                    return (false, $"Class is full (max {maxPerClass} students).", null);
 
-                // add enrollment
-                var enrollment = new Enrollment
-                {
-                    Id = _idCounter++,
-                    StudentId = studentId,
-                    ClassId = classId,
-                    EnrollmentDate = DateTime.UtcNow
-                };
-
-                if (!_enrollments.TryAdd(enrollment.Id, enrollment))
-                    return (false, "Failed to add enrollment (internal).", null);
-
-                if (!_byPair.TryAdd(key, enrollment))
-                {
-                    // rollback if pair add failed
-                    _enrollments.TryRemove(enrollment.Id, out _);
-                    return (false, "Enrollment already exists (race).", null);
-                }
-
-                return (true, null, enrollment);
+                var e = new Enrollment { StudentId = studentId, ClassId = classId, EnrollmentDate = DateTime.UtcNow };
+                var ok = _repo.Add(e);
+                if (!ok) return (false, "Failed to add enrollment.", null);
+                return (true, null, e);
             }
             finally
             {
-                firstLock.Item2.Release();
-                firstLock.Item1.Release();
+                sem.Release();
             }
         }
 
-        // Remove enrollment by id
-        public bool Remove(int id)
+        public bool UnenrollByPair(int studentId, int classId)
         {
-            if (!_enrollments.TryRemove(id, out var e))
-                return false;
-            var key = $"{e.StudentId}-{e.ClassId}";
-            _byPair.TryRemove(key, out _);
-            return true;
-        }
-
-        // Optional helper: remove by pair (studentId,classId) if you want
-        public bool RemoveByPair(int studentId, int classId)
-        {
-            var key = $"{studentId}-{classId}";
-            if (!_byPair.TryRemove(key, out var e))
-                return false;
-            _enrollments.TryRemove(e.Id, out _);
-            return true;
+            var existing = _repo.FindByPair(studentId, classId);
+            if (existing == null) return false;
+            return _repo.Remove(existing.Id);
         }
     }
 }

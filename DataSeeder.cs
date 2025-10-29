@@ -1,5 +1,6 @@
-﻿using StudentManagmentAPI.Models;
-using StudentManagementAPI.Services;
+﻿using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
+using StudentManagmentAPI.Models;
 
 namespace StudentManagementAPI.SeedData
 {
@@ -7,11 +8,11 @@ namespace StudentManagementAPI.SeedData
     {
         public static void Seed(
             StudentService studentService,
-            ClassService classService,
+            IClassService classService,
             EnrollmentService enrollmentService,
             MarkService markService)
         {
-            // ✅ 10 طلاب
+            //  10 طلاب
             var students = new[]
             {
                 new Student { FirstName = "Hesham", LastName = "Rslan" },
@@ -39,7 +40,7 @@ namespace StudentManagementAPI.SeedData
                 new Class { Name = "Physics", Teacher = "Dr. Hany", Description = "Intro to Mechanics", CreatedAt = DateTime.UtcNow.AddDays(-20) }
             };
             foreach (var c in classes)
-                classService.Add(c);
+                classService.Create(c);
 
             //  تسجيلات الطلاب في الكلاسات (Enrollments)
             var enrollPairs = new (int s, int c)[]

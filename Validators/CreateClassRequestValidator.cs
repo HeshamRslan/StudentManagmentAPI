@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using StudentManagmentAPI.Models.DTOs;
 
 public class CreateClassRequestValidator : AbstractValidator<CreateClassRequest>
 {

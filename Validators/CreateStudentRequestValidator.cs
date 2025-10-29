@@ -4,11 +4,11 @@ public class CreateStudentRequestValidator : AbstractValidator<CreateStudentRequ
     public CreateStudentRequestValidator()
     {
         RuleFor(x => x.FirstName)
-            .NotEmpty().WithMessage("Student name is required.")
+            .NotEmpty().WithMessage("Student FirstName is required.")
             .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
 
         RuleFor(x => x.LastName)
             .NotEmpty().WithMessage("Last name is required.")
-            .EmailAddress().WithMessage("Invalid.");
+            .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
     }
 }

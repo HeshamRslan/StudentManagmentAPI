@@ -42,7 +42,7 @@ public class ClassArchiveBackgroundService : BackgroundService
 
                 if (archiveService.Archive(cls))
                 {
-                    classService.Remove(cls.Id);
+                    classService.Delete(cls.Id);
                 }
             }
 

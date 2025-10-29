@@ -1,63 +1,59 @@
 ﻿using FastEndpoints;
 using StudentManagementAPI.Services;
+using StudentManagmentAPI.Models.DTOs;
 
-public class CreateEnrollmentRequest
+namespace StudentManagementAPI.Endpoints.Enrollments
 {
-    public int StudentId { get; set; }
-    public int ClassId { get; set; }
-}
-
-public class CreateEnrollmentEndpoint : Endpoint<CreateEnrollmentRequest, object>
-{
-    private readonly EnrollmentService _enrollmentService;
-    private readonly StudentService _studentService;
-    private readonly ClassService _classService;
-
-    public CreateEnrollmentEndpoint(EnrollmentService enrollmentService, StudentService studentService, ClassService classService)
+    public class CreateEnrollmentEndpoint : Endpoint<EnrollRequest, ApiResponse<EnrollmentResponse>>
     {
-        _enrollmentService = enrollmentService;
-        _studentService = studentService;
-        _classService = classService;
-    }
+        private readonly EnrollmentService _enrollmentService;
+        private readonly StudentService _studentService;
+        private readonly ClassService _classService;
 
-    public override void Configure()
-    {
-        Post("/api/enrollments");
-        AllowAnonymous();
-        Validator<CreateEnrollmentRequestValidator>();
-    }
-
-    public override async Task HandleAsync(CreateEnrollmentRequest req, CancellationToken ct)
-    {
-        // basic existence checks
-        var student = _studentService.GetById(req.StudentId);
-        if (student == null)
+        public CreateEnrollmentEndpoint(EnrollmentService enrollmentService, StudentService studentService, ClassService classService)
         {
-            await SendAsync(new { success = false, message = "Student not found." }, 404, ct);
-            return;
-        }
-        var cls = _classService.GetById(req.ClassId);
-        if (cls == null)
-        {
-            await SendAsync(new { success = false, message = "Class not found." }, 404, ct);
-            return;
+            _enrollmentService = enrollmentService;
+            _studentService = studentService;
+            _classService = classService;
         }
 
-        // Call TryEnrollAsync, pass callbacks to get counts
-        var result = await _enrollmentService.TryEnrollAsync(
-            req.StudentId,
-            req.ClassId,
-            studentId => _enrollmentService.GetByStudentId(studentId).Count(),   // student count provider
-            classId => _enrollmentService.GetByClassId(classId).Count(),         // class count provider
-            maxClassesPerStudent: 5,
-            maxStudentsPerClass: 30);
-
-        if (!result.Success)
+        public override void Configure()
         {
-            await SendAsync(new { success = false, message = result.Error }, 409, ct);
-            return;
+            Post("/api/enrollments"); 
+            AllowAnonymous();
+            Validator<CreateEnrollmentRequestValidator>();
         }
 
-        await SendAsync(new { success = true, message = "Enrolled successfully.", data = result.Enrollment }, 201, ct);
+        public override async Task HandleAsync(EnrollRequest req, CancellationToken ct)
+        {
+            var student = _studentService.GetById(req.StudentId);
+            var cls = _classService.GetById(req.ClassId);
+            if (student == null || cls == null)
+            {
+                await SendAsync(new ApiResponse<EnrollmentResponse>
+                {
+                    Success = false,
+                    Message = "Invalid ids"
+                }, 404, ct);
+             return;
+            }
+
+            var result = await _enrollmentService.TryEnrollAsync
+                (req.StudentId, req.ClassId, sid => _enrollmentService.GetByStudentId(sid).Count()
+                , cid => _enrollmentService.GetByClassId(cid).Count());
+            if (!result.Success) 
+            {
+                await SendAsync(new ApiResponse<EnrollmentResponse> 
+                {
+                    Success = false,
+                    Message = result.Error
+                }, 409, ct); return; 
+            }
+            await SendAsync(new ApiResponse<EnrollmentResponse> 
+            {
+                Success = true,
+                Message = "Enrolled",
+                Data = result.Enrollment.ToResponse() }, 201, ct);
+        }
     }
 }

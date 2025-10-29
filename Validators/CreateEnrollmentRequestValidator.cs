@@ -1,7 +1,8 @@
 ﻿using FluentValidation;
 using StudentManagmentAPI.Models;
+using StudentManagmentAPI.Models.DTOs;
 
-public class CreateEnrollmentRequestValidator : AbstractValidator<CreateEnrollmentRequest>
+public class CreateEnrollmentRequestValidator : AbstractValidator<EnrollRequest>
 {
     public CreateEnrollmentRequestValidator()
     {
@@ -10,5 +11,6 @@ public class CreateEnrollmentRequestValidator : AbstractValidator<CreateEnrollme
 
         RuleFor(x => x.ClassId)
             .GreaterThan(0).WithMessage("Valid Class ID is required.");
+
     }
 }

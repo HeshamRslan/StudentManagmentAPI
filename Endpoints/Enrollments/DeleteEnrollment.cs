@@ -12,14 +12,15 @@ public class DeleteEnrollmentEndpoint : EndpointWithoutRequest<object>
 
     public override void Configure()
     {
-        Delete("/api/enrollments/{id}");
+        Delete("/api/enrollments}");
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var id = Route<int>("id");
-        var removed = _enrollmentService.Remove(id);
+        var studentId = Route<int>("studentId");
+        var classId = Route<int>("classId");
+        var removed = _enrollmentService.UnenrollByPair(studentId, classId);
 
         if (!removed)
         {

@@ -1,12 +1,7 @@
 ﻿using FastEndpoints;
 using StudentManagementAPI.Services;
+namespace StudentManagmentAPI.Models.DTOs;
 
-public class UpdateMarkRequest
-{
-    public int Id { get; set; }
-    public decimal ExamMark { get; set; }
-    public decimal AssignmentMark { get; set; }
-}
 
 public class UpdateMarkEndpoint : Endpoint<UpdateMarkRequest, object>
 {
@@ -35,7 +30,7 @@ public class UpdateMarkEndpoint : Endpoint<UpdateMarkRequest, object>
         mark.ExamMark = req.ExamMark;
         mark.AssignmentMark = req.AssignmentMark;
 
-        var updated = _markService.Update(req.Id, mark);
+        var updated = _markService.Update(mark);
         if (!updated)
         {
             await SendAsync(new { success = false, message = "Failed to update mark." }, 500, ct);

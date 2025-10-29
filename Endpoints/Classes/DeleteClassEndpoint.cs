@@ -1,43 +1,45 @@
 ﻿using FastEndpoints;
+using StudentManagmentAPI.Models.DTOs;
 using StudentManagementAPI.Services;
 
-public class DeleteClassEndpoint : EndpointWithoutRequest
+namespace StudentManagementAPI.Endpoints.Classes
 {
-    private readonly ClassService _classService;
-    private readonly EnrollmentService _enrollmentService;
-
-    public DeleteClassEndpoint(ClassService classService, EnrollmentService enrollmentService)
+    public class DeleteClassEndpoint : EndpointWithoutRequest<ApiResponse<object>>
     {
-        _classService = classService;
-        _enrollmentService = enrollmentService;
-    }
+        private readonly ClassService _classService;
 
-    public override void Configure()
-    {
-        Delete("/api/classes/{id}");
-        AllowAnonymous();
-    }
-
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        var id = Route<int>("id");
-        var enrolled = _enrollmentService.GetByClassId(id);
-        if (enrolled.Any())
+        public DeleteClassEndpoint(ClassService classService)
         {
-            await SendAsync(new { success = false, message = "Cannot delete class with enrolled students. Unenroll them first." }, 400, ct);
-            return;
-        }
-        // proceed to remove class
-
-
-        var deleted = _classService.Remove(id);
-
-        if (!deleted)
-        {
-            await SendAsync(new { success = false, message = "Class not found or could not be Removed." }, 404, ct);
-            return;
+            _classService = classService;
         }
 
-        await SendAsync(new { success = true, message = "Class Removed successfully." }, 200, ct);
+        public override void Configure()
+        {
+            Delete("/api/classes/{id:int}");
+            AllowAnonymous();
+        }
+
+        public override async Task HandleAsync(CancellationToken ct)
+        {
+            var id = Route<int>("id");
+
+            var (success, error) = _classService.Delete(id);
+
+            if (!success)
+            {
+                await SendAsync(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = error ?? "Failed to delete class."
+                }, 400, ct);
+                return;
+            }
+
+            await SendAsync(new ApiResponse<object>
+            {
+                Success = true,
+                Message = $"Class with ID {id} deleted successfully."
+            }, 200, ct);
+        }
     }
 }

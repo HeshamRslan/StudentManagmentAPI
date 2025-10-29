@@ -1,34 +1,31 @@
-﻿using StudentManagmentAPI.Models;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using StudentManagmentAPI.Models;
+using StudentManagementAPI.Services.Repositories;
 
 namespace StudentManagementAPI.Services
 {
     public class MarkService
     {
-        private readonly ConcurrentDictionary<int, Mark> _marks = new();
-        private int _idCounter = 1;
+        private readonly IMarkRepository _repo;
 
-        public IEnumerable<Mark> GetAll() => _marks.Values;
-
-        public Mark? GetById(int id)
-            => _marks.TryGetValue(id, out var mark) ? mark : null;
-
-        public bool Add(Mark mark)
+        public MarkService(IMarkRepository repo)
         {
-            mark.Id = _idCounter++;
-            return _marks.TryAdd(mark.Id, mark);
+            _repo = repo;
         }
 
-        public bool Update(int id, Mark updatedMark)
-        {
-            if (!_marks.ContainsKey(updatedMark.Id))
-                return false; 
-            
-            _marks[updatedMark.Id] = updatedMark;
-            return true;
-        }
+        public IEnumerable<Mark> GetAll() => _repo.GetAll();
 
-        public bool Remove(int id)
-            => _marks.TryRemove(id, out _);
+        public Mark? GetById(int id) => _repo.GetById(id);
+
+        public bool Add(Mark m) => _repo.Add(m);
+
+        public bool Update(Mark m) => _repo.Update(m);
+
+        public bool Remove(int id) => _repo.Remove(id);
+
+        public IEnumerable<Mark> GetByStudent(int studentId) => _repo.GetAll().Where(x => x.StudentId == studentId);
+
+        public IEnumerable<Mark> GetByClass(int classId) => _repo.GetAll().Where(x => x.ClassId == classId);
     }
 }

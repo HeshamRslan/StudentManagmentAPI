@@ -1,11 +1,12 @@
 ﻿using FastEndpoints;
 using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class GetAllClassesEndpoint : EndpointWithoutRequest
 {
-    private readonly ClassService _classService;
+    private readonly IClassService _classService;
 
-    public GetAllClassesEndpoint(ClassService classService)
+    public GetAllClassesEndpoint(IClassService classService)
     {
         _classService = classService;
     }
