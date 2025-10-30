@@ -1,18 +1,18 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class DeleteEnrollmentEndpoint : EndpointWithoutRequest<object>
 {
-    private readonly EnrollmentService _enrollmentService;
+    private readonly IEnrollmentService _enrollmentService;
 
-    public DeleteEnrollmentEndpoint(EnrollmentService enrollmentService)
+    public DeleteEnrollmentEndpoint(IEnrollmentService enrollmentService)
     {
         _enrollmentService = enrollmentService;
     }
 
     public override void Configure()
     {
-        Delete("/api/enrollments}");
+        Delete("/api/enrollments/{studentId}/{classId}"); // FIXED: Added route parameters
         AllowAnonymous();
     }
 

@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using StudentManagmentAPI.Models;
 using StudentManagementAPI.Services.Repositories;
+using StudentManagementAPI.Services.Interfaces;
 
 namespace StudentManagementAPI.Services
 {
-    public class MarkService
+    public class MarkService : IMarkService
     {
         private readonly IMarkRepository _repo;
 

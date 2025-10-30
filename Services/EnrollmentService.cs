@@ -6,10 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using StudentManagmentAPI.Models;
 using StudentManagementAPI.Services.Repositories;
+using StudentManagementAPI.Services.Interfaces;
 
 namespace StudentManagementAPI.Services
 {
-    public class EnrollmentService
+    public class EnrollmentService : IEnrollmentService
     {
         private readonly IEnrollmentRepository _repo;
         // simple locks per pair to prevent race conditions

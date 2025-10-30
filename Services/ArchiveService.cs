@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using StudentManagementAPI.Services.Interfaces;
 using StudentManagmentAPI.Models;
 
 namespace StudentManagementAPI.Services
 {
-    public class ArchiveService
+    public class ArchiveService : IArchiveService
     {
         private readonly ConcurrentDictionary<int, Class> _archived = new();
         public IEnumerable<Class> GetAll() => _archived.Values;

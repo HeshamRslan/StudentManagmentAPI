@@ -1,26 +1,28 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
-namespace StudentManagmentAPI.Models.DTOs;
-
+using StudentManagementAPI.Services.Interfaces;
+using StudentManagmentAPI.Models.DTOs;
 
 public class UpdateMarkEndpoint : Endpoint<UpdateMarkRequest, object>
 {
-    private readonly MarkService _markService;
+    private readonly IMarkService _markService;
 
-    public UpdateMarkEndpoint(MarkService markService)
+    public UpdateMarkEndpoint(IMarkService markService)
     {
         _markService = markService;
     }
 
     public override void Configure()
     {
-        Put("/api/marks");
+        Put("/api/marks/{id}"); // Added route parameter
         AllowAnonymous();
+        Validator<UpdateMarkRequestValidator>(); 
     }
 
     public override async Task HandleAsync(UpdateMarkRequest req, CancellationToken ct)
     {
-        var mark = _markService.GetById(req.Id);
+        var id = Route<int>("id"); // Get from route
+        var mark = _markService.GetById(id);
+
         if (mark == null)
         {
             await SendAsync(new { success = false, message = "Mark not found." }, 404, ct);
