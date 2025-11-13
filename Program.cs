@@ -4,8 +4,21 @@ using StudentManagementAPI.SeedData;
 using StudentManagementAPI.Services;
 using StudentManagementAPI.Services.Interfaces;
 using StudentManagementAPI.Services.Repositories;
+using StudentManagementAPI.Services.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ============ CACHE CONFIGURATION ============
+var cacheConfig = new CacheConfiguration
+{
+    EnableCaching = builder.Configuration.GetValue<bool>("CacheSettings:EnableCaching", true),
+    StudentsCacheExpiration = TimeSpan.FromMinutes(builder.Configuration.GetValue<int>("CacheSettings:StudentsExpirationMinutes", 5)),
+    ClassesCacheExpiration = TimeSpan.FromMinutes(builder.Configuration.GetValue<int>("CacheSettings:ClassesExpirationMinutes", 10)),
+    EnrollmentsCacheExpiration = TimeSpan.FromMinutes(builder.Configuration.GetValue<int>("CacheSettings:EnrollmentsExpirationMinutes", 3)),
+    MarksCacheExpiration = TimeSpan.FromMinutes(builder.Configuration.GetValue<int>("CacheSettings:MarksExpirationMinutes", 2)),
+    ReportsCacheExpiration = TimeSpan.FromSeconds(builder.Configuration.GetValue<int>("CacheSettings:ReportsExpirationSeconds", 30))
+};
+builder.Services.AddSingleton(cacheConfig);
 
 // ============ REPOSITORIES (Singleton - Stateful in-memory stores) ============
 builder.Services.AddSingleton<IClassRepository, ClassRepository>();
@@ -13,8 +26,15 @@ builder.Services.AddSingleton<IStudentRepository, StudentRepository>();
 builder.Services.AddSingleton<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddSingleton<IMarkRepository, MarkRepository>();
 
+// ============ INFRASTRUCTURE SERVICES ============
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 1024; // Limit cache size
+    options.CompactionPercentage = 0.25; // Compact 25% when limit reached
+});
+builder.Services.AddSingleton<ICacheService, CacheService>();
+
 // ============ SERVICES (Scoped - Better for future DB integration) ============
-// Note: Using Scoped instead of Singleton for better lifecycle management
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -24,8 +44,7 @@ builder.Services.AddScoped<IArchiveService, ArchiveService>();
 // ============ BACKGROUND SERVICES ============
 builder.Services.AddHostedService<ClassArchiveBackgroundService>();
 
-// ============ INFRASTRUCTURE ============
-builder.Services.AddMemoryCache();
+// ============ AUTHENTICATION & AUTHORIZATION ============
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
