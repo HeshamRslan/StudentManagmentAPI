@@ -1,6 +1,6 @@
 ﻿using FastEndpoints;
 using StudentManagmentAPI.Models;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class CreateMarkRequest
 {
@@ -12,11 +12,11 @@ public class CreateMarkRequest
 
 public class CreateMarkEndpoint : Endpoint<CreateMarkRequest, object>
 {
-    private readonly MarkService _markService;
-    private readonly StudentService _studentService;
-    private readonly ClassService _classService;
+    private readonly IMarkService _markService;
+    private readonly IStudentService _studentService;
+    private readonly IClassService _classService;
 
-    public CreateMarkEndpoint(MarkService markService, StudentService studentService, ClassService classService)
+    public CreateMarkEndpoint(IMarkService markService, IStudentService studentService, IClassService classService)
     {
         _markService = markService;
         _studentService = studentService;

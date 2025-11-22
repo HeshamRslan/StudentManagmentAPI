@@ -1,11 +1,11 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class DeleteMarkEndpoint : EndpointWithoutRequest<object>
 {
-    private readonly MarkService _markService;
+    private readonly IMarkService _markService;
 
-    public DeleteMarkEndpoint(MarkService markService)
+    public DeleteMarkEndpoint(IMarkService markService)
     {
         _markService = markService;
     }

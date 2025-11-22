@@ -1,13 +1,12 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
 using StudentManagementAPI.Services.Interfaces;
 
 public class GetClassAverageEndpoint : EndpointWithoutRequest<object>
 {
     private readonly IClassService _classService;
-    private readonly MarkService _markService;
+    private readonly IMarkService _markService;
 
-    public GetClassAverageEndpoint(IClassService classService, MarkService markService)
+    public GetClassAverageEndpoint(IClassService classService, IMarkService markService)
     {
         _classService = classService;
         _markService = markService;

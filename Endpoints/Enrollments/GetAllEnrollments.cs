@@ -1,5 +1,5 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class GetAllEnrollmentsRequest
 {
@@ -9,9 +9,9 @@ public class GetAllEnrollmentsRequest
 
 public class GetAllEnrollmentsEndpoint : Endpoint<GetAllEnrollmentsRequest, object>
 {
-    private readonly EnrollmentService _enrollmentService;
+    private readonly IEnrollmentService _enrollmentService;
 
-    public GetAllEnrollmentsEndpoint(EnrollmentService enrollmentService)
+    public GetAllEnrollmentsEndpoint(IEnrollmentService enrollmentService)
     {
         _enrollmentService = enrollmentService;
     }

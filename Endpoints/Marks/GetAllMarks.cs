@@ -1,5 +1,5 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class GetAllMarksRequest
 {
@@ -9,9 +9,9 @@ public class GetAllMarksRequest
 
 public class GetAllMarksEndpoint : Endpoint<GetAllMarksRequest, object>
 {
-    private readonly MarkService _markService;
+    private readonly IMarkService _markService;
 
-    public GetAllMarksEndpoint(MarkService markService)
+    public GetAllMarksEndpoint(IMarkService markService)
     {
         _markService = markService;
     }

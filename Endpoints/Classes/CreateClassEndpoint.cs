@@ -1,14 +1,14 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Mappings;
 using StudentManagementAPI.Services.Interfaces;
 using StudentManagmentAPI.Models.DTOs;
 
 public class CreateClassEndpoint : Endpoint<CreateClassRequest, ApiResponse<ClassResponse>>
 {
     private readonly IClassService _classService;
-    private readonly EnrollmentService _enrollmentService; // optional for counts
+    private readonly IEnrollmentService _enrollmentService; // optional for counts
 
-    public CreateClassEndpoint(IClassService classService, EnrollmentService enrollmentService)
+    public CreateClassEndpoint(IClassService classService, IEnrollmentService enrollmentService)
     {
         _classService = classService;
         _enrollmentService = enrollmentService;

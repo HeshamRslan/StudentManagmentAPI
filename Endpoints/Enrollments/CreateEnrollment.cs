@@ -1,16 +1,17 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Mappings;
+using StudentManagementAPI.Services.Interfaces;
 using StudentManagmentAPI.Models.DTOs;
 
 namespace StudentManagementAPI.Endpoints.Enrollments
 {
     public class CreateEnrollmentEndpoint : Endpoint<EnrollRequest, ApiResponse<EnrollmentResponse>>
     {
-        private readonly EnrollmentService _enrollmentService;
-        private readonly StudentService _studentService;
-        private readonly ClassService _classService;
+        private readonly IEnrollmentService _enrollmentService;
+        private readonly IStudentService _studentService;
+        private readonly IClassService _classService;
 
-        public CreateEnrollmentEndpoint(EnrollmentService enrollmentService, StudentService studentService, ClassService classService)
+        public CreateEnrollmentEndpoint(IEnrollmentService enrollmentService, IStudentService studentService, IClassService classService)
         {
             _enrollmentService = enrollmentService;
             _studentService = studentService;
@@ -53,7 +54,7 @@ namespace StudentManagementAPI.Endpoints.Enrollments
             {
                 Success = true,
                 Message = "Enrolled",
-                Data = result.Enrollment.ToResponse() }, 201, ct);
+                Data = result.Created?.ToResponse() }, 201, ct);
         }
     }
 }

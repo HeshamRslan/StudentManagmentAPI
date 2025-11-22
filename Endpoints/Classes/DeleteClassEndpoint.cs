@@ -1,14 +1,14 @@
 ﻿using FastEndpoints;
 using StudentManagmentAPI.Models.DTOs;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 namespace StudentManagementAPI.Endpoints.Classes
 {
     public class DeleteClassEndpoint : EndpointWithoutRequest<ApiResponse<object>>
     {
-        private readonly ClassService _classService;
+        private readonly IClassService _classService;
 
-        public DeleteClassEndpoint(ClassService classService)
+        public DeleteClassEndpoint(IClassService classService)
         {
             _classService = classService;
         }
