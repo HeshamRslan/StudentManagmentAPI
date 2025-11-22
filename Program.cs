@@ -79,6 +79,9 @@ try
         };
     });
 
+    // Add Serilog as a singleton service
+    builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
+
     var app = builder.Build();
 
     // ============ MIDDLEWARE PIPELINE ============

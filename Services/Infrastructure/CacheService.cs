@@ -61,6 +61,10 @@ namespace StudentManagementAPI.Services.Infrastructure
                 SlidingExpiration = TimeSpan.FromMinutes(2)
             };
 
+            // When IMemoryCache SizeLimit is set, each entry must specify a Size.
+            // Use a unit size (1) per entry; adjust if you want weighted sizing.
+            options.SetSize(1);
+
             options.RegisterPostEvictionCallback((k, v, reason, state) =>
             {
                 _keys.TryRemove(k.ToString()!, out _);
