@@ -1,5 +1,7 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Mappings;
+using StudentManagementAPI.Services.Interfaces;
+using StudentManagmentAPI.Models.DTOs;
 
 public class UpdateStudentRequest
 {
@@ -9,28 +11,33 @@ public class UpdateStudentRequest
     public int Age { get; set; }
 }
 
-public class UpdateStudentEndpoint : Endpoint<UpdateStudentRequest>
+public class UpdateStudentEndpoint : Endpoint<UpdateStudentRequest, ApiResponse<StudentResponse>>
 {
-    private readonly StudentService _studentService;
+    private readonly IStudentService _studentService;
 
-    public UpdateStudentEndpoint(StudentService studentService)
+    public UpdateStudentEndpoint(IStudentService studentService)
     {
         _studentService = studentService;
     }
 
     public override void Configure()
     {
-        Put("/api/students");
+        Put("/api/students/{id}");
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(UpdateStudentRequest req, CancellationToken ct)
     {
-        var existing = _studentService.GetById(req.Id);
+        var id = Route<int>("id");
+        var existing = _studentService.GetById(id);
 
         if (existing == null)
         {
-            await SendAsync(new { success = false, message = "Student not found." }, 404, ct);
+            await SendAsync(new ApiResponse<StudentResponse>
+            {
+                Success = false,
+                Message = "Student not found."
+            }, 404, ct);
             return;
         }
 
@@ -42,10 +49,19 @@ public class UpdateStudentEndpoint : Endpoint<UpdateStudentRequest>
 
         if (!updated)
         {
-            await SendAsync(new { success = false, message = "Failed to update student." }, 500, ct);
+            await SendAsync(new ApiResponse<StudentResponse>
+            {
+                Success = false,
+                Message = "Failed to update student."
+            }, 500, ct);
             return;
         }
 
-        await SendAsync(new { success = true, message = "Student updated successfully.", student = existing }, 200, ct);
+        await SendAsync(new ApiResponse<StudentResponse>
+        {
+            Success = true,
+            Message = "Student updated successfully.",
+            Data = existing.ToResponse()
+        }, 200, ct);
     }
 }

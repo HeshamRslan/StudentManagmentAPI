@@ -7,10 +7,10 @@ namespace StudentManagementAPI.SeedData
     public static class DataSeeder
     {
         public static void Seed(
-            StudentService studentService,
+            IStudentService studentService,
             IClassService classService,
-            EnrollmentService enrollmentService,
-            MarkService markService)
+            IEnrollmentService enrollmentService,
+            IMarkService markService)
         {
             //  10 طلاب
             var students = new[]

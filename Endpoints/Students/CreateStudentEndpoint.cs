@@ -1,6 +1,8 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Mappings;
+using StudentManagementAPI.Services.Interfaces;
 using StudentManagmentAPI.Models;
+using StudentManagmentAPI.Models.DTOs;
 
 public class CreateStudentRequest
 {
@@ -9,11 +11,11 @@ public class CreateStudentRequest
     public int Age { get; set; }
 }
 
-public class CreateStudentEndpoint : Endpoint<CreateStudentRequest>
+public class CreateStudentEndpoint : Endpoint<CreateStudentRequest, ApiResponse<StudentResponse>>
 {
-    private readonly StudentService _studentService;
+    private readonly IStudentService _studentService;
 
-    public CreateStudentEndpoint(StudentService studentService)
+    public CreateStudentEndpoint(IStudentService studentService)
     {
         _studentService = studentService;
     }
@@ -29,7 +31,11 @@ public class CreateStudentEndpoint : Endpoint<CreateStudentRequest>
     {
         if (string.IsNullOrWhiteSpace(req.FirstName) || string.IsNullOrWhiteSpace(req.LastName))
         {
-            await SendAsync(new { success = false, message = "First name and last name are required." }, 400, ct);
+            await SendAsync(new ApiResponse<StudentResponse>
+            {
+                Success = false,
+                Message = "First name and last name are required."
+            }, 400, ct);
             return;
         }
 
@@ -44,10 +50,19 @@ public class CreateStudentEndpoint : Endpoint<CreateStudentRequest>
 
         if (!added)
         {
-            await SendAsync(new { success = false, message = "Failed to create student." }, 500, ct);
+            await SendAsync(new ApiResponse<StudentResponse>
+            {
+                Success = false,
+                Message = "Failed to create student."
+            }, 500, ct);
             return;
         }
 
-        await SendAsync(new { success = true, message = "Student created successfully.", student }, 201, ct);
+        await SendAsync(new ApiResponse<StudentResponse>
+        {
+            Success = true,
+            Message = "Student created successfully.",
+            Data = student.ToResponse()
+        }, 201, ct);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class ClassArchiveBackgroundService : BackgroundService
 {
@@ -27,10 +28,9 @@ public class ClassArchiveBackgroundService : BackgroundService
                 await Task.Delay(TimeSpan.FromMinutes(intervalMinutes), stoppingToken);
                 continue;
             }
-
-            var classService = scope.ServiceProvider.GetRequiredService<ClassService>();
+            var classService = scope.ServiceProvider.GetRequiredService<IClassService>(); // ✓ WORKS
+            var enrollmentService = scope.ServiceProvider.GetRequiredService<IEnrollmentService>(); // ✓ WORKS
             var archiveService = scope.ServiceProvider.GetRequiredService<ArchiveService>();
-            var enrollmentService = scope.ServiceProvider.GetRequiredService<EnrollmentService>();
 
             var cutoff = DateTime.UtcNow.AddMonths(-archiveAfterMonths);
             var oldClasses = classService.GetAll().Where(c => c.CreatedAt < cutoff).ToList();

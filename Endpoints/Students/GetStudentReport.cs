@@ -1,14 +1,14 @@
 ﻿using FastEndpoints;
-using StudentManagementAPI.Services;
+using StudentManagementAPI.Services.Interfaces;
 
 public class GetStudentReportEndpoint : EndpointWithoutRequest<object>
 {
-    private readonly StudentService _studentService;
-    private readonly ClassService _classService;
-    private readonly MarkService _markService;
-    private readonly EnrollmentService _enrollmentService;
+    private readonly IStudentService _studentService;
+    private readonly IClassService _classService;
+    private readonly IMarkService _markService;
+    private readonly IEnrollmentService _enrollmentService;
 
-    public GetStudentReportEndpoint(StudentService studentService, ClassService classService, MarkService markService, EnrollmentService enrollmentService)
+    public GetStudentReportEndpoint(IStudentService studentService, IClassService classService, IMarkService markService, IEnrollmentService enrollmentService)
     {
         _studentService = studentService;
         _classService = classService;
